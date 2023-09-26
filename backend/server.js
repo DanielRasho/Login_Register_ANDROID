@@ -82,6 +82,44 @@ app.post("/login", (req, res) => {
   );
 });
 
+// Sign-up route
+app.post("/signup", (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if the username already exists in the database
+  db.query(
+    "SELECT * FROM users WHERE username = ?",
+    [username],
+    (err, results) => {
+      if (err) {
+        logger.error("Database error:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      if (results.length > 0) {
+        // Username already exists
+        return res.status(400).json({ message: "User already exists" });
+      } else {
+        // Insert the new user into the database
+        db.query(
+          "INSERT INTO users (username, password) VALUES (?, ?)",
+          [username, password],
+          (err) => {
+            if (err) {
+              logger.error("Database error:", err);
+              return res.status(500).json({ message: "Database error" });
+            }
+
+            // User was successfully inserted
+            logger.info(`New user ${username} registered`);
+            res.json({ message: "Registration successful" });
+          }
+        );
+      }
+    }
+  );
+});
+
 // Protected route that requires a valid token
 app.get("/protected", verifyToken, (req, res) => {
     // If the middleware (verifyToken) passed, the token is valid
