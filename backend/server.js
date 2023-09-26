@@ -17,13 +17,16 @@ app.use(express.urlencoded({ extended: false }));
 // check token expiration
 const currenttimestamp = Math.floor(Date.now() / 1000); // current time in seconds
 
-const dummyuser = {
-  username: "daniel",
+// Create a MySQL connection pool
+const db = mysql.createPool({
+  host: "localhost",
+  user: "smaug",
   password: "1234",
-};
+  database: "simpleLogin", // Use the name of your database
+});
 
 const secretKey = "SUPER_SECRET";
-const tokenExpiration = "30s"; // Token expiration time, e.g., 1 hour
+const tokenExpiration = "60s"; // Token expiration time, e.g., 1 hour
 
 // Middleware to verify JWT token
 function verifyToken(req, res, next) {
@@ -47,27 +50,37 @@ function verifyToken(req, res, next) {
       req.user = decoded;
       next();
     });
-  }
-  app.post("/login", (req, res) => {
-    const { username, password } = req.body;
-  
-    // Check if the provided username and password match the dummy user
-    if (username === dummyUser.username && password === dummyUser.password) {
-      // If the login is successful, create a JWT token with expiration
-      const token = jwt.sign({ username }, secretKey, { expiresIn: tokenExpiration });
-  
-      // Log the successful login and token generation
-      logger.info(`User ${username} logged in successfully`);
-      logger.info(`Generated JWT token: ${token}`);
-  
-      // Send the token as a response
-      res.json({ message: "Login successful", token });
-    } else {
-      // If the login fails, send an error response
-      logger.warn(`Login failed for user ${username}`);
-      res.status(401).json({ message: "Login failed" });
+}
+// POST /login endpoint
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  // Authenticate user against the database
+  db.query(
+    "SELECT * FROM users WHERE username = ? AND password = ?",
+    [username, password],
+    (err, results) => {
+      if (err) {
+        logger.error("Database error:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      if (results.length === 1) {
+        // User authentication successful
+        const token = jwt.sign({ username }, secretKey, { expiresIn: tokenExpiration });
+
+        logger.info(`User ${username} logged in successfully`);
+        logger.info(`Generated JWT token: ${token}`);
+
+        res.json({ message: "Login successful", token });
+      } else {
+        // User authentication failed
+        logger.warn(`Login failed for user ${username}`);
+        res.status(401).json({ message: "Login failed" });
+      }
     }
-  });
+  );
+});
 
 // Protected route that requires a valid token
 app.get("/protected", verifyToken, (req, res) => {
