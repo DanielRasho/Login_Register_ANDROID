@@ -88,7 +88,7 @@ fun LoginView(navController: NavController) {
                     coroutineScope.launch {
                         val (statusCode, loginResponse) = sendLoginCredentials(username, password)
                         if(statusCode == 200){
-                            navController.navigate(Screen.HomeView.route + "/OauthToken=${loginResponse.token}")
+                            navController.navigate(Screen.HomeView.route + "/${loginResponse.token}")
                         }
                         else{
                             Toast.makeText(context,

@@ -34,19 +34,23 @@ function verifyToken(req, res, next) {
   
     if (!token) {
       return res.status(401).json({ message: "Token not provided" });
+      logger.error("Token not provided")
     }
   
     jwt.verify(token, secretKey, (err, decoded) => {
       if (err) {
+        logger.error("Invalid Token")
         return res.status(401).json({ message: "Invalid token" });
       }
   
       // Check token expiration
       const currentTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
       if (decoded.exp <= currentTimestamp) {
+        logger.error("Token has expired")
         return res.status(401).json({ message: "Token has expired" });
       }
   
+      logger.error("Home petition succesful")
       req.user = decoded;
       next();
     });
@@ -142,8 +146,12 @@ app.post("/signup", (req, res) => {
 
 // Protected route that requires a valid token
 app.get("/home", verifyToken, (req, res) => {
+    let timeLeft = tokenTimeLeft(req)
     // If the middleware (verifyToken) passed, the token is valid
-    res.json({ message: "Your session will end in:" + tokenTimeLeft(req) });
+    res.json({ 
+      message: "Your session will end in:" + timeLeft,
+      timeRemaining: timeLeft
+    });
   });
 
 
