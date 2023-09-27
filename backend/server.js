@@ -51,6 +51,26 @@ function verifyToken(req, res, next) {
       next();
     });
 }
+// Middleware to verify JWT token
+function tokenTimeLeft(req) {
+    const token = req.headers["authorization"];
+    let tokenTimeLeft = 0;
+  
+    if (!token) {
+      return res.status(401).json({ message: "Token not provided" });
+    }
+  
+    jwt.verify(token, secretKey, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+  
+      // Check token expiration
+      const currentTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
+      tokenTimeLeft = decoded.exp - currentTimestamp
+    });
+    return tokenTimeLeft;
+}
 // POST /login endpoint
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
@@ -62,7 +82,7 @@ app.post("/login", (req, res) => {
     (err, results) => {
       if (err) {
         logger.error("Database error:", err);
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error" }); // STATUS : 500 Server error
       }
 
       if (results.length === 1) {
@@ -70,13 +90,13 @@ app.post("/login", (req, res) => {
         const token = jwt.sign({ username }, secretKey, { expiresIn: tokenExpiration });
 
         logger.info(`User ${username} logged in successfully`);
-        logger.info(`Generated JWT token: ${token}`);
+        logger.info(`Generated JWT token ${username}: ${token}`);
 
         res.json({ message: "Login successful", token });
       } else {
         // User authentication failed
         logger.warn(`Login failed for user ${username}`);
-        res.status(401).json({ message: "Login failed" });
+        res.status(401).json({ message: "Wrong username or password" }); // STATUS : 401 Unauthorized
       }
     }
   );
@@ -93,12 +113,12 @@ app.post("/signup", (req, res) => {
     (err, results) => {
       if (err) {
         logger.error("Database error:", err);
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error" }); // STATUS : 500 Server error
       }
 
       if (results.length > 0) {
         // Username already exists
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(409).json({ message: "User already exists" }); // STATUS : 409 Conflict with the current DB state.
       } else {
         // Insert the new user into the database
         db.query(
@@ -107,7 +127,7 @@ app.post("/signup", (req, res) => {
           (err) => {
             if (err) {
               logger.error("Database error:", err);
-              return res.status(500).json({ message: "Database error" });
+              return res.status(500).json({ message: "Database error" }); // Status : 500 Server error
             }
 
             // User was successfully inserted
@@ -121,9 +141,9 @@ app.post("/signup", (req, res) => {
 });
 
 // Protected route that requires a valid token
-app.get("/protected", verifyToken, (req, res) => {
+app.get("/home", verifyToken, (req, res) => {
     // If the middleware (verifyToken) passed, the token is valid
-    res.json({ message: "Current time is " + new Date().toISOString() });
+    res.json({ message: "Your session will end in:" + tokenTimeLeft(req) });
   });
 
 

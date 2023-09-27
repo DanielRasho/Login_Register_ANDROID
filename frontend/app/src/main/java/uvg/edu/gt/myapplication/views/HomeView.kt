@@ -5,6 +5,6 @@ import androidx.navigation.NavController
 import uvg.edu.gt.myapplication.Screen
 
 @Composable
-fun HomeView(navController: NavController){
+fun HomeView(navController: NavController, OauthToken : String){
 
 }
