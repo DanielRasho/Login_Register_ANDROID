@@ -55,7 +55,7 @@ fun HomeView(navController: NavController, oauthToken : String){
             Text(text = "Check Token Remaining time")
         }
         Spacer(modifier = Modifier.height(15.dp))
-        Text(text = "Your session will end in:\n $timeRemaining",
+        Text(text = "Your session will end in:\n $timeRemaining s",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center)
