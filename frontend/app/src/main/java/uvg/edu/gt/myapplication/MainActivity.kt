@@ -1,6 +1,7 @@
 package uvg.edu.gt.myapplication
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.navigation.NavType
@@ -25,13 +26,12 @@ class MainActivity : ComponentActivity() {
                     SignUpView(navController)
                 }
                 composable(
-                    route = Screen.HomeView.route ,
+                    route = Screen.HomeView.route + "/{OauthToken}",
                     arguments = listOf(navArgument("OauthToken") { type = NavType.StringType })
                 ){ backStackEntry ->
-                    val OauthToken = backStackEntry.arguments?.getString("OauthToken")
-                    if (OauthToken != null) {
-                        HomeView(navController, OauthToken)
-                    }
+                    val oauthToken = backStackEntry.arguments?.getString("OauthToken")
+                    requireNotNull(oauthToken) { Log.e("Error","Token must NOT be null")}
+                    HomeView(navController, oauthToken)
                 }
             }
         }

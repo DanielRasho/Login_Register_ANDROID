@@ -88,7 +88,7 @@ fun LoginView(navController: NavController) {
                     coroutineScope.launch {
                         val (statusCode, loginResponse) = sendLoginCredentials(username, password)
                         if(statusCode == 200){
-                            navController.navigate(Screen.HomeView.route + "?OauthToken=${loginResponse.token}")
+                            navController.navigate(Screen.HomeView.route + "/OauthToken=${loginResponse.token}")
                         }
                         else{
                             Toast.makeText(context,
@@ -140,7 +140,7 @@ suspend fun sendLoginCredentials(username: String, password: String): Pair<Int, 
             .build()
 
         // Execute the request and get the response
-        try{        val response = client.newCall(request).execute()
+            val response = client.newCall(request).execute()
             val statusCode = response.code
 
             // Check if the request was successful
@@ -153,9 +153,6 @@ suspend fun sendLoginCredentials(username: String, password: String): Pair<Int, 
                 // Handle the error here or return a default response
                 Pair(statusCode, LoginResponse("Login failed", ""))
             }
-        } catch (e: Exception){
-            Pair(500, LoginResponse("Cant connect to server", ""))
-        }
 
     }
 }
